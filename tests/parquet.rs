@@ -9,9 +9,52 @@ use std::{collections::HashMap, path::PathBuf, time::SystemTime};
 
 use amadeus::prelude::*;
 
+use amadeus::amadeus_parquet::GroupPredicate;
+use amadeus_parquet::ValuePredicate;
+
+#[tokio::test(threaded_scheduler)]
+#[cfg_attr(miri, ignore)]
+async fn parquet2() {
+    let start = SystemTime::now();
+
+    let pool = &ThreadPool::new(None).unwrap();
+
+    let row_predicate = Some(GroupPredicate::new(
+        [(String::from("location"), None), (String::from("uri"), None)]
+            .iter()
+            .cloned(),
+    ));
+
+    let rows = Parquet::<_, Value>::new(vec![
+        S3File::new_with(AwsRegion::UsEast1, "us-east-1.data-analytics", "cflogworkshop/optimized/cf-accesslogs/year=2018/month=11/day=02/part-00176-17868f39-cd99-4b60-bb48-8daf9072122e.c000.snappy.parquet", AwsCredentials::Anonymous),
+    ], Some(ValuePredicate::Group(row_predicate))).await.unwrap();
+
+    let mut k = false;
+
+    let row_count = rows.par_stream()
+        .map(move |row: Result<_, _>| {
+            let unwrapped_row = row.unwrap();
+
+            if k == false {
+                println!("Row1 = {:?}", unwrapped_row);
+                k = true;
+            }
+
+            // Will assert here to check that only the columns specified by the predicate are present
+
+            unwrapped_row
+        })
+        .count(pool)
+        .await;
+
+    println!("Num rows = {}", row_count);
+}
+
 #[tokio::test(threaded_scheduler)]
 #[cfg_attr(miri, ignore)]
 async fn parquet() {
+    return;
+
 	let start = SystemTime::now();
 
 	let pool = &ThreadPool::new(None).unwrap();

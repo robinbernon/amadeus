@@ -65,10 +65,12 @@ pub use schemas::RootSchema;
 mod predicate {
 	/// This is for forward compatibility when Predicate pushdown and dynamic schemas are
 	/// implemented.
-	#[derive(Clone, Debug)]
+	use serde::{Serialize, Deserialize};
+	#[derive(Clone, Debug, Serialize, Deserialize)]
 	pub struct Predicate;
 }
 pub(crate) use self::predicate::Predicate;
+use serde::{Serialize, Deserialize};
 
 /// This trait is implemented on all types that can be read from/written to Parquet files.
 ///
@@ -154,7 +156,7 @@ pub trait ParquetData: Data + Sized {
 	// Clone + PartialEq + Debug + 'static
 	type Schema: Schema;
 	type Reader: Reader<Item = Self>;
-	type Predicate: Clone + Debug;
+	type Predicate: Clone + Debug + Serialize + for<'de> Deserialize<'de> + Send;
 
 	/// Parse a [`Type`] into `Self::Schema`, using `repetition` instead of
 	/// `Type::get_basic_info().repetition()`. A `repetition` of `None` denotes a root

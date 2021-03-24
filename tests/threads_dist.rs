@@ -10,6 +10,7 @@ use tokio::time::delay_for as sleep;
 use amadeus::dist::prelude::*;
 
 fn main() {
+    return;
 	if cfg!(miri) {
 		return;
 	}

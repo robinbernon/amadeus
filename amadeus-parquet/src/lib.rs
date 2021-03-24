@@ -60,7 +60,9 @@ mod wrap {
 		file::{Directory, File, Page, Partition, PathBuf}, into_par_stream::IntoDistributedStream, par_stream::DistributedStream, util::{DistParStream, ResultExpandIter}, Source
 	};
 
-	pub use internal::record::ParquetData;
+	pub use internal::record::{
+        ParquetData, predicates::{GroupPredicate, ValuePredicate}
+    };
 
 	#[doc(hidden)]
 	pub mod derive {
@@ -117,38 +119,45 @@ mod wrap {
 		}
 		#[allow(clippy::let_and_return)]
 		fn dist_stream(self) -> Self::DistStream {
-            let predicate = self.row_predicate.clone();
+            // let predicate = self.row_predicate.clone();
+
+            let predicate = 1u64;
 
 			self.partitions
 				.into_dist_stream()
-				.flat_map(FnMut!(|partition: F::Partition| async move {
-					Ok(stream::iter(
-						partition
-							.pages()
-							.await
-							.map_err(ParquetError::Partition)?
-							.into_iter(),
-					)
-					.flat_map(|page| {
-						async move {
-							let mut buf = Vec::with_capacity(10 * 1024 * 1024);
-							let reader = Page::reader(page);
-							pin_mut!(reader);
-							let buf = PassError::new(
-								reader.read_to_end(&mut buf).await.map(|_| Cursor::new(buf)),
-							);
-							Ok(stream::iter(
-								SerializedFileReader::new(buf)?.get_row_iter::<Row>(None)?,
-							))
-						}
-						.map(ResultExpandIter::new)
-						.flatten_stream()
-					})
-					.map(|row: Result<Result<Row, _>, Self::Error>| Ok(row??)))
-				}
-				.map(ResultExpandIter::new)
-				.flatten_stream()
-				.map(|row: Result<Result<Row, Self::Error>, Self::Error>| Ok(row??))))
+				.flat_map(FnMut!(move |partition: F::Partition| {
+                    async move {
+                        Ok(stream::iter(
+                            partition
+                                .pages()
+                                .await
+                                .map_err(ParquetError::Partition)?
+                                .into_iter(),
+                        )
+                            .flat_map(move |page| {
+                                async move {
+                                    let mut buf = Vec::with_capacity(10 * 1024 * 1024);
+                                    let reader = Page::reader(page);
+                                    pin_mut!(reader);
+                                    let buf = PassError::new(
+                                        reader.read_to_end(&mut buf).await.map(|_| Cursor::new(buf)),
+                                    );
+
+                                    let b = predicate;
+
+                                    Ok(stream::iter(
+                                        SerializedFileReader::new(buf)?.get_row_iter::<Row>(None)?,
+                                    ))
+                                }
+                                    .map(ResultExpandIter::new)
+                                    .flatten_stream()
+                            })
+                            .map(|row: Result<Result<Row, _>, Self::Error>| Ok(row??)))
+                    }
+                        .map(ResultExpandIter::new)
+                        .flatten_stream()
+                        .map(|row: Result<Result<Row, Self::Error>, Self::Error>| Ok(row??))
+                }))
 		}
 	}
 
@@ -327,7 +336,7 @@ mod wrap {
 
 	use std::io;
 
-	impl ParquetReader for PassError<Cursor<Vec<u8>>> {
+    impl ParquetReader for PassError<Cursor<Vec<u8>>> {
 		fn len(&self) -> u64 {
 			self.0.as_ref().unwrap().get_ref().len() as u64
 		}

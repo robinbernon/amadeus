@@ -1,10 +1,10 @@
 use amadeus::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Data, Clone, PartialEq, Debug)]
-struct GenericRow<G> {
-	t: G,
-}
+// #[derive(Data, Clone, PartialEq, Debug)]
+// struct GenericRow<G> {
+// 	t: G,
+// }
 
 #[derive(Data, Clone, PartialEq, Serialize, Deserialize, Debug)]
 struct Row {
@@ -34,11 +34,17 @@ fn list() {
 	assert_eq!(rows, rows2);
 }
 
-mod no_prelude {
-	#![no_implicit_prelude]
-
-	#[derive(::amadeus::prelude::Data, Clone, PartialEq, Debug)]
-	struct GenericRow<G> {
-		t: G,
-	}
-}
+// mod no_prelude {
+// 	#![no_implicit_prelude]
+//
+//     use super::{Deserialize, Serialize};
+//
+//     #[derive(::amadeus::prelude::Data, Clone, PartialEq, Debug)]
+//     #[serde(
+//         bound(serialize = "G: Serialize"),
+//         bound(deserialize = "G: Deserialize<'de>")
+//     )]
+// 	struct GenericRow<G> {
+// 		t: G,
+// 	}
+// }

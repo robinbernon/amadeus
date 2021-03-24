@@ -1,12 +1,13 @@
 use fxhash::FxBuildHasher;
-use hashlink::LinkedHashMap;
+use hashlink::linked_hash_map::LinkedHashMap;
 use std::collections::HashMap;
+use serde::{Serialize, Deserialize};
 
 use amadeus_types::{Bson, Date, DateTime, Decimal, Enum, Group, Json, List, Time, Value};
 
 use crate::internal::record::ParquetData;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 /// Predicate for [`Group`]s
 pub struct MapPredicate<K, V> {
 	pub(super) key: Option<K>,
@@ -18,11 +19,11 @@ impl<K, V> MapPredicate<K, V> {
 	}
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 /// Predicate for [`Group`]s
 pub struct GroupPredicate(
 	/// Map of field names to predicates for the fields in the group
-	pub(super) LinkedHashMap<String, Option<<Value as ParquetData>::Predicate>, FxBuildHasher>,
+	pub(super) LinkedHashMap<String, Option<<Value as ParquetData>::Predicate>>,
 );
 impl GroupPredicate {
 	pub fn new<I>(fields: I) -> Self
@@ -33,7 +34,7 @@ impl GroupPredicate {
 	}
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 /// Predicate for [`Value`]s
 pub enum ValuePredicate {
 	Bool(Option<<bool as ParquetData>::Predicate>),
