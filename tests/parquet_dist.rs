@@ -10,6 +10,7 @@ use std::{
 use amadeus::dist::prelude::*;
 
 fn main() {
+	return;
 	if cfg!(miri) {
 		return;
 	}

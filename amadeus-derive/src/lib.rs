@@ -268,9 +268,33 @@ fn impl_struct(
 		});
 
 		let predicate_derives = if cfg!(feature = "serde") {
-			Some(quote! {
-				#[derive(Clone, Debug, __::Serialize, __::Deserialize)]
-			})
+            let generic_type_idents = ast.generics.type_params().into_iter().map(|x| x.ident.to_string()).collect::<Vec<String>>();
+
+            if generic_type_idents.len() > 0 {
+                let mut serialization_bounds = generic_type_idents.join(": Serialize, ");
+                serialization_bounds.push_str(": Serialize");
+                let mut deserialization_bounds = generic_type_idents.join(r": Deserialize<'de>, ");
+                deserialization_bounds.push_str(r": Deserialize<'de>");
+
+                let temp = Some(quote! {
+				    #[derive(Clone, Debug, __::Serialize, __::Deserialize)]
+				    #[serde(
+                        bound(serialize = #serialization_bounds),
+                        bound(deserialize = #deserialization_bounds)
+                    )]
+			    });
+
+                let ast_string = format!("{:?}", ast);
+                if ast_string.contains("GenericRow") {
+                    println!("Below is derive for GenericRowPredicate:\n\n {}\n\n\n", temp.as_ref().unwrap());
+                }
+
+                temp
+            } else {
+                Some(quote! {
+				    #[derive(Clone, Debug, __::Serialize, __::Deserialize)]
+			    })
+            }
 		} else {
 			None
 		};

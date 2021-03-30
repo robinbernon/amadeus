@@ -1,6 +1,11 @@
 use amadeus::prelude::*;
 use serde::{Deserialize, Serialize};
 
+#[derive(Data, Clone, PartialEq, Debug)]
+struct GenericRow<G> {
+    t: G,
+}
+
 #[derive(Data, Clone, PartialEq, Serialize, Deserialize, Debug)]
 struct Row {
 	a: String,
@@ -27,4 +32,13 @@ fn list() {
 	let json = serde_json::to_string(&rows).unwrap();
 	let rows2 = serde_json::from_str(&*json).unwrap();
 	assert_eq!(rows, rows2);
+}
+
+mod no_prelude {
+    #![no_implicit_prelude]
+
+    #[derive(::amadeus::prelude::Data, Clone, PartialEq, Debug)]
+    struct GenericRow<G> {
+        t: G,
+    }
 }
