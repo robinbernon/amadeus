@@ -271,10 +271,10 @@ fn impl_struct(
             let generic_type_idents = ast.generics.type_params().into_iter().map(|x| x.ident.to_string()).collect::<Vec<String>>();
 
             if generic_type_idents.len() > 0 {
-                let mut serialization_bounds = generic_type_idents.join(": Serialize, ");
-                serialization_bounds.push_str(": Serialize");
-                let mut deserialization_bounds = generic_type_idents.join(r": Deserialize<'de>, ");
-                deserialization_bounds.push_str(r": Deserialize<'de>");
+                let mut serialization_bounds = generic_type_idents.join(": __::Serialize, ");
+                serialization_bounds.push_str(": __::Serialize");
+                let mut deserialization_bounds = generic_type_idents.join(r": __::Deserialize<'de>, ");
+                deserialization_bounds.push_str(r": __::Deserialize<'de>");
 
                 let temp = Some(quote! {
 				    #[derive(Clone, Debug, __::Serialize, __::Deserialize)]
