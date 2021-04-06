@@ -685,6 +685,11 @@ fn impl_struct(
 		}
 	};
 
+    let ast_string = format!("{:?}", ast);
+    if ast_string.contains("GenericRow") {
+        println!("Below is the derived Data for GenericRow<G>:\n\n\n\n {}\n\n\n\n\n\n\n", &gen);
+    }
+
 	let gen = quote! {
 		#[allow(non_upper_case_globals, unused_attributes, unused_qualifications, clippy::type_complexity, unknown_lints,clippy::useless_attribute,rust_2018_idioms)]
 		const _: () = {
